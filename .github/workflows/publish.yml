@@ -29,11 +29,13 @@ jobs:
         with:
           path: ./build/plugin_lua54/**/*
           name: plugin_lua54
+          overwrite: true
       - name: Upload53
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_lua53/**/*
           name: plugin_lua53   
+          overwrite: true
   linux:
     runs-on: ubuntu-latest
     steps:
