@@ -341,7 +341,11 @@
 #endif
 
 #ifndef LJ_PAGESIZE
+#ifdef __ANDROID__
+#define LJ_PAGESIZE		16384
+#else
 #define LJ_PAGESIZE		4096
+#endif
 #endif
 
 /* Check for minimum required compiler versions. */
