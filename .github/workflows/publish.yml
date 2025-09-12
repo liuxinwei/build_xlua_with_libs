@@ -39,6 +39,12 @@ jobs:
           path: ./build/plugin_lua53/**/*
           name: plugin_lua53   
           overwrite: true
+      - name: NDK
+        uses: actions/upload-artifact@v4
+        with:
+          path: ~/NDK
+          name: NDK
+          overwrite: true
   linux:
     runs-on: ubuntu-latest
     steps:
