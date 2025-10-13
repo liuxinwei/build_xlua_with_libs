@@ -26,6 +26,8 @@ option ( GC64 "using gc64" OFF )
 option ( LUAC_COMPATIBLE_FORMAT "compatible format" OFF )
 option ( PBC "using pbc" ON )
 
+
+
 find_path(XLUA_PROJECT_DIR NAMES SConstruct
     PATHS 
     ${CMAKE_SOURCE_DIR}
@@ -52,7 +54,7 @@ set_property(
 list(APPEND THIRDPART_INC  lua-rapidjson/include)
 set (THIRDPART_SRC ${THIRDPART_SRC} ${RAPIDJSON_SRC})
 #end lua-rapidjson
-
+set(PBC TRUE)
 if (NOT PBC)
 	#begin lua-profobuf
 	set (LPB_SRC 
