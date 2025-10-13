@@ -110,60 +110,7 @@ jobs:
         with:
           path: ./build/plugin_luajit/**/*
           name: plugin_luajit_linux  
-  ios:
-    runs-on: macos-latest
 
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build
-        run: |
-          cd build
-          ./make_ios_lua54.sh
-          ./make_ios_lua53.sh
-          ./make_ios_luajit.sh
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          path: ./build/plugin_lua54/**/*
-          name: plugin_lua54_ios
-      - name: Upload53
-        uses: actions/upload-artifact@v4
-        with:
-          path: ./build/plugin_lua53/**/*
-          name: plugin_lua53_ios   
-      - name: UploadJit
-        uses: actions/upload-artifact@v4
-        with:
-          path: ./build/plugin_luajit/**/*
-          name: plugin_luajit_ios
-  osx:
-    runs-on: macos-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build
-        run: |
-          cd build
-          ./make_osx_lua54.sh
-          ./make_osx_lua53.sh
-          ./make_osx_luajit.sh
-          ./make_osx_silicon_lua53.sh
-          ./make_osx_silicon_lua54.sh
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          path: ./build/plugin_lua54/**/*
-          name: plugin_lua54_osx  
-      - name: Upload53
-        uses: actions/upload-artifact@v4
-        with:
-          path: ./build/plugin_lua53/**/*
-          name: plugin_lua53_osx     
-      - name: UploadJit
-        uses: actions/upload-artifact@v4
-        with:
-          path: ./build/plugin_luajit/**/*
-          name: plugin_luajit_osx  
   windows:
     runs-on: windows-2022
 
