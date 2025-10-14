@@ -24,9 +24,7 @@ option ( UINT_ESPECIALLY "using custom ulong" OFF )
 option ( USING_LUAJIT "using luajit" OFF )
 option ( GC64 "using gc64" OFF )
 option ( LUAC_COMPATIBLE_FORMAT "compatible format" OFF )
-option ( PBC "using pbc" ON )
-
-
+option ( PBC "using pbc" OFF )
 
 find_path(XLUA_PROJECT_DIR NAMES SConstruct
     PATHS 
@@ -54,22 +52,22 @@ set_property(
 list(APPEND THIRDPART_INC  lua-rapidjson/include)
 set (THIRDPART_SRC ${THIRDPART_SRC} ${RAPIDJSON_SRC})
 #end lua-rapidjson
-set(PBC TRUE)
-# if (NOT PBC)
-# 	#begin lua-profobuf
-# 	set (LPB_SRC 
-# 		lua-protobuf/pb.c
-# 	)
-# 	set_property(
-# 		SOURCE ${LPB_SRC}
-# 		APPEND
-# 		PROPERTY COMPILE_DEFINITIONS
-# 		LUA_LIB
-# 	)
-# 	list(APPEND THIRDPART_INC lua-protobuf)
-# 	set (THIRDPART_SRC ${THIRDPART_SRC} ${LPB_SRC})
-# 	#end lua-protobuf
-# else()
+
+if (NOT PBC)
+	#begin lua-profobuf
+	set (LPB_SRC 
+		lua-protobuf/pb.c
+	)
+	set_property(
+		SOURCE ${LPB_SRC}
+		APPEND
+		PROPERTY COMPILE_DEFINITIONS
+		LUA_LIB
+	)
+	list(APPEND THIRDPART_INC lua-protobuf)
+	set (THIRDPART_SRC ${THIRDPART_SRC} ${LPB_SRC})
+	#end lua-protobuf
+else()
 	#begin pbc
 	set (PBC_SRC 
 		pbc/src/alloc.c
@@ -103,7 +101,7 @@ set(PBC TRUE)
 	list(APPEND THIRDPART_INC pbc pbc/src)
 	set (THIRDPART_SRC ${THIRDPART_SRC} ${PBC_SRC})
 	#end pbc
-# endif ()
+endif ()
 
 #begin lpeg
 set ( LPEG_SRC
@@ -242,7 +240,6 @@ source_group_by_dir(${CMAKE_CURRENT_SOURCE_DIR} XLUA_CORE)
 
 if (APPLE)
     if (IOS)
-        ADD_DEFINITIONS(-DLUA_USE_IOS) # Despite claiming to be ISO C, iOS does not implement 'system'.(iOS11)
         set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD)")
         add_library(xlua STATIC
            ${LUA_CORE}
@@ -254,29 +251,17 @@ if (APPLE)
 		set_xcode_property (xlua IPHONEOS_DEPLOYMENT_TARGET "7.0" "all")
     else ()
         ADD_DEFINITIONS(-DLUA_USE_MACOSX) #osx platform emmylua debugger must have this option or can not load cpath
-        if (BUILD_SILICON)
-           set(CMAKE_OSX_ARCHITECTURES arm64)
-
-            add_library(xlua SHARED
-                ${LUA_CORE}
-                ${LUA_LIB}
-                ${LUA_SOCKET}
-                ${XLUA_CORE}
-                ${THIRDPART_SRC}
-            )
-        else ()
-            set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD_64_BIT)")
-            add_library(xlua MODULE
-                ${LUA_CORE}
-                ${LUA_LIB}
-                ${LUA_SOCKET}
-                ${XLUA_CORE}
-                ${THIRDPART_SRC}
-            )
-            set_target_properties ( xlua PROPERTIES BUNDLE TRUE )
-            #set_target_properties ( xlua PROPERTIES FRAMEWORK TRUE )
-            #set_target_properties ( xlua PROPERTIES MACOSX_RPATH TRUE )
-        endif ()
+        set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD_64_BIT)")
+        add_library(xlua MODULE
+            ${LUA_CORE}
+            ${LUA_LIB}
+            ${LUA_SOCKET}
+            ${XLUA_CORE}
+            ${THIRDPART_SRC}
+        )
+        set_target_properties ( xlua PROPERTIES BUNDLE TRUE )
+        #set_target_properties ( xlua PROPERTIES FRAMEWORK TRUE )
+        #set_target_properties ( xlua PROPERTIES MACOSX_RPATH TRUE )
     endif ()
 elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Switch")
     add_library(xlua STATIC
@@ -346,7 +331,6 @@ else ( )
         )
     endif()
 endif ( )
-
 if ( ANDROID )
     target_link_options(xlua PRIVATE -Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384) # android 16K Pagesize
 endif ( )
