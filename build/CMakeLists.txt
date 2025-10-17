@@ -121,6 +121,22 @@ list(APPEND THIRDPART_INC  lpeg)
 set (THIRDPART_SRC ${THIRDPART_SRC} ${LPEG_SRC})
 #end lpeg
 
+#begin int64
+# if (USING_LUAJIT)
+    set ( LPEG_INT64
+        int64/int64.c
+    )
+    set_property(
+        SOURCE ${LPEG_INT64}
+        APPEND
+        PROPERTY COMPILE_DEFINITIONS
+        LUA_LIB
+    )
+    list(APPEND THIRDPART_INC  int64)
+    set (THIRDPART_SRC ${THIRDPART_SRC} ${LPEG_INT64})
+# endif ()
+#end int64
+
 #begin FFI
 if (NOT USING_LUAJIT)
 	set (FFI_SRC ffi/parser.c ffi/ctype.c ffi/ffi.c)

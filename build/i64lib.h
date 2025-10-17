@@ -29,6 +29,14 @@ LUALIB_API int lua_isuint64(lua_State* L, int pos);
 LUALIB_API int64_t lua_toint64(lua_State* L, int pos);
 LUALIB_API uint64_t lua_touint64(lua_State* L, int pos);
 
+typedef void (*lua_PrintFunction) (char* L);
+
+LUA_API void RegisterLogCallback(lua_PrintFunction callback);
+
+void LogInfo(const char* message, ...);
+
+void print_stack_trace_win32(void);
+
 #ifdef __cplusplus
 #if __cplusplus
 }

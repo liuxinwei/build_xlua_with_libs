@@ -7,14 +7,15 @@
 */
 
 #define LUA_LIB
-
 #include "i64lib.h"
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
 
 #if ( defined (_WIN32) ||  defined (_WIN64) ) && !defined (__MINGW32__) && !defined (__MINGW64__)
-
+#include <windows.h>
+#include <dbghelp.h>
+#pragma comment(lib, "dbghelp.lib")
 #if !defined(PRId64)
 # if __WORDSIZE == 64  
 #  define PRId64    "ld"   
@@ -221,6 +222,7 @@ static Integer64 lua_checkinteger64(lua_State* L, int pos) {
 }
 
 static int int64_add(lua_State* L) {
+	LogInfo("+++++++++++++++++++++ +");
     Integer64 lhs = lua_checkinteger64(L, 1);    
     Integer64 rhs = lua_checkinteger64(L, 2);
 	
@@ -235,6 +237,7 @@ static int int64_add(lua_State* L) {
 }
 
 static int int64_sub(lua_State* L) {
+	LogInfo("+++++++++++++++++++++ -");
     Integer64 lhs = lua_checkinteger64(L, 1);    
     Integer64 rhs = lua_checkinteger64(L, 2);
 	
@@ -250,6 +253,7 @@ static int int64_sub(lua_State* L) {
 
 
 static int int64_mul(lua_State* L) {
+	LogInfo("+++++++++++++++++++++ *");
     Integer64 lhs = lua_checkinteger64(L, 1);    
     Integer64 rhs = lua_checkinteger64(L, 2);
 	
@@ -264,6 +268,8 @@ static int int64_mul(lua_State* L) {
 }
 
 static int int64_div(lua_State* L) {
+
+	LogInfo("+++++++++++++++++++++ /");
     Integer64 lhs = lua_checkinteger64(L, 1);    
     Integer64 rhs = lua_checkinteger64(L, 2);
 	
@@ -282,6 +288,7 @@ static int int64_div(lua_State* L) {
 }
 
 static int int64_mod(lua_State* L) {
+	LogInfo("+++++++++++++++++++++ %");
     Integer64 lhs = lua_checkinteger64(L, 1);    
     Integer64 rhs = lua_checkinteger64(L, 2);
 
@@ -300,12 +307,14 @@ static int int64_mod(lua_State* L) {
 }
 
 static int int64_unm(lua_State* L) {
+	LogInfo("+++++++++++++++++++++ unm");
     Integer64 lhs = lua_checkinteger64(L, 1); 
     lua_pushint64(L, -lhs.data.i64);
     return 1;
 }
 
 static int int64_pow(lua_State* L) {
+	LogInfo("+++++++++++++++++++++ pow");
     Integer64 lhs = lua_checkinteger64(L, 1);    
     Integer64 rhs = lua_checkinteger64(L, 2);
 
@@ -320,6 +329,7 @@ static int int64_pow(lua_State* L) {
 }
 
 static int int64_eq(lua_State* L) {
+	LogInfo("+++++++++++++++++++++ ==");
     Integer64 lhs = lua_checkinteger64(L, 1);     
     Integer64 rhs = lua_checkinteger64(L, 2); 
     
@@ -334,6 +344,7 @@ static int int64_eq(lua_State* L) {
 }
 
 static int int64_lt(lua_State* L) {
+	LogInfo("+++++++++++++++++++++ <");
     Integer64 lhs = lua_checkinteger64(L, 1); 
     Integer64 rhs = lua_checkinteger64(L, 2);
 	
@@ -348,9 +359,9 @@ static int int64_lt(lua_State* L) {
 }
 
 static int int64_le(lua_State* L) {
+	LogInfo("+++++++++++++++++++++ <=");
 	Integer64 lhs = lua_checkinteger64(L, 1); 
     Integer64 rhs = lua_checkinteger64(L, 2);
-	
 	if (lhs.type != rhs.type && lhs.type != Num && rhs.type != Num) {
 		return luaL_error(L, "type not match, lhs is %s, rhs is %s", lhs.type == Int ? "Int64" : "UInt64", rhs.type == Int ? "Int64" : "UInt64");
 	} else if (lhs.type == UInt || rhs.type == UInt) {
@@ -509,3 +520,54 @@ LUALIB_API int luaopen_i64lib(lua_State* L)
 	return 0;
 }
 
+lua_PrintFunction s_lua_PrintFunction;
+
+void LogInfo(const char* message, ...) {
+	if (s_lua_PrintFunction == NULL) return;
+	char stack_buffer[256];
+	char* dynamic_buffer = NULL;
+	char* final_buffer = stack_buffer;
+	va_list args;
+	va_start(args, message);
+	int needed = vsnprintf(stack_buffer, sizeof(stack_buffer), message, args);
+	if (needed >= (int)sizeof(stack_buffer)) {
+		dynamic_buffer = (char*)malloc(needed + 1);
+		if (dynamic_buffer != NULL) {
+			va_end(args);
+			va_start(args, message);
+			vsnprintf(dynamic_buffer, needed + 1, message, args);
+			final_buffer = dynamic_buffer;
+		}
+	}
+	va_end(args);
+	s_lua_PrintFunction(final_buffer);
+}
+
+void print_stack_trace_win32(void) {
+	void* stack[100];
+	HANDLE process = GetCurrentProcess();
+	unsigned short frames;
+	SYMBOL_INFO* symbol;
+
+	SymInitialize(process, NULL, TRUE);
+
+	// ²¶»ñ¶ÑÕ»Ö¡
+	frames = CaptureStackBackTrace(0, 100, stack, NULL);
+	LogInfo("Obtained %d stack frames.\n", frames);
+
+	symbol = (SYMBOL_INFO*)calloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), 1);
+	symbol->MaxNameLen = 255;
+	symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+
+	for (unsigned int i = 0; i < frames; i++) {
+		SymFromAddr(process, (DWORD64)(stack[i]), 0, symbol);
+		LogInfo("%i: %s - 0x%0X\n", frames - i - 1, symbol->Name, symbol->Address);
+	}
+
+	free(symbol);
+}
+
+LUA_API void RegisterLogCallback(lua_PrintFunction callback)
+{
+	s_lua_PrintFunction = callback;
+}
